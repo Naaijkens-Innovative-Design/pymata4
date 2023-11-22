@@ -45,6 +45,8 @@ class PrivateConstants:
     TONE_DATA = 0x5F  # play a tone at a specified frequency and duration
     SONAR_CONFIG = 0x62  # configure pins to control a sonar distance device
     SONAR_DATA = 0x63  # distance data returned
+    EEPROM_REQUEST = 0x54
+    EEPROM_REPLY = 0x55
     # end of FirmataExpress defined SYSEX commands
 
     SERVO_CONFIG = 0x70  # set servo pin and max and min angles
@@ -133,3 +135,7 @@ class PrivateConstants:
     I2C_END_TX_MASK = 0B01000000
     I2C_STOP_TX = 1
     I2C_RESTART_TX = 0
+
+    # EEPROM command operation modes
+    EEPROM_WRITE = 0x00
+    EEPROM_READ = 0x01
