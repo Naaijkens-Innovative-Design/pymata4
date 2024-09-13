@@ -57,26 +57,38 @@ def blink(my_board, pin):
         print('OFF')
         my_board.digital_pin_write(pin, 0)
 
-    print('write eeprom')
-    my_board.eeprom_write(300, [56, 65, 78, 98])
-   
-    time.sleep(2);
+board = pymata4.Pymata4(com_port='COM3',baud_rate=57600)
 
-    print('read eeprom')
-    my_board.eeprom_read(300, 4, the_callback)
+# test eeprom
+print('write eeprom')
+board.eeprom_write(300, [56, 65, 78, 98])
+time.sleep(2);
+print('read eeprom')
+board.eeprom_read(300, 4, the_callback)
 
-    while True:
-        try:
-            time.sleep(10)
-            sys.exit(0)
-        except KeyboardInterrupt:
-            my_board.shutdown()
-            sys.exit(0)
+# test isotest
+print('start isotest type 1')
+board.isotest_start(1)
+time.sleep(2);
+print('read isotest')
+board.isotest_read(the_callback)
 
-board = pymata4.Pymata4(com_port='COM11',baud_rate=57600)
+print('start isotest type 2')
+board.isotest_start(2)
+time.sleep(2);
+print('read isotest')
+board.isotest_read(the_callback)
+
 try:
-    blink(board, 13)
-    board.shutdown()
+    time.sleep(10)
 except KeyboardInterrupt:
     board.shutdown()
     sys.exit(0)
+
+while True:
+    try:
+        blink(board, 13)
+        time.sleep(1)
+    except KeyboardInterrupt:
+        board.shutdown()
+        sys.exit(0)

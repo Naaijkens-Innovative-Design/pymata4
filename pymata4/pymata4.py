@@ -155,6 +155,7 @@ class Pymata4(threading.Thread):
         self.report_dispatch.update({PrivateConstants.STRING_DATA: [self._string_data, 2]})
         self.report_dispatch.update({PrivateConstants.I2C_REPLY: [self._i2c_reply, 2]})
         self.report_dispatch.update({PrivateConstants.EEPROM_REPLY: [self._eeprom_reply, 2]})
+        self.report_dispatch.update({PrivateConstants.ISOTEST_REPLY: [self._isotest_reply, 2]})
         self.report_dispatch.update({PrivateConstants.CAPABILITY_RESPONSE: [self._capability_response, 2]})
         self.report_dispatch.update({PrivateConstants.PIN_STATE_RESPONSE: [self._pin_state_response, 2]})
         self.report_dispatch.update({PrivateConstants.ANALOG_MAPPING_RESPONSE: [self._analog_mapping_response, 4]})
@@ -198,6 +199,9 @@ class Pymata4(threading.Thread):
         # a lock for the i2c map data structure
         self.the_eeprom_map_lock = threading.Lock()
 
+        # a lock for the isotest map data structure
+        self.the_isotest_map_lock = threading.Lock()
+
         # a when sending data to the arduino
         self.the_send_sysex_lock = threading.Lock()
 
@@ -224,6 +228,15 @@ class Pymata4(threading.Thread):
         # For example:
         # {12345: {'value': 23, 'callback': None, time_stamp:None}}
         self.eeprom_map = {}
+
+        # An isotest_map entry consists of a isotest data key, and
+        #  the value of the key consists of a dictionary containing 2 entries.
+        #  The first entry. 'value' contains the last value reported, and
+        # the second, 'callback' contains a reference to a callback function,
+        # and the third, a time-stamp
+        # For example:
+        # {12345: {'value': 23, 'callback': None, time_stamp:None}}
+        self.isotest_map = {}
 
         # The active_sonar_map maps the sonar trigger pin number (the key)
         # to the current data value returned
@@ -1477,6 +1490,41 @@ class Pymata4(threading.Thread):
         #print(x.hex())
         self._send_sysex(PrivateConstants.EEPROM_REQUEST, data)
 
+    def isotest_read(self, callback=None):
+        """
+        Read the specified number of bytes from the specified register for
+        the eeprom
+
+        :param address: eeprom address
+
+        :param number_of_bytes: number of bytes to be read
+
+        :param callback: Optional callback function to report i2c data as a
+                   result of read command
+
+        callback returns a data list:
+
+        [eeprom_address, data_bytes returned, time_stamp]
+
+        """
+
+        self._isotest_read_request(callback)
+
+    def isotest_start(self, type):
+        """
+        Write data to an eeprom
+
+        :param address: eeprom address
+
+        :param args: A variable number of bytes to be sent to the device
+                     passed in as a list
+
+        """                                               
+        data = [PrivateConstants.ISOTEST_START, type]
+        #x = bytearray(data)
+        #print(x.hex())
+        self._send_sysex(PrivateConstants.ISOTEST_REQUEST, data)
+
     '''
     Firmata message handlers
     '''
@@ -2041,3 +2089,63 @@ class Pymata4(threading.Thread):
        
         data = [PrivateConstants.EEPROM_READ, address & 0x7f, (address >> 7) & 0x7f, number_of_bytes]
         self._send_sysex(PrivateConstants.EEPROM_REQUEST, data)
+
+    def _isotest_reply(self, data):
+        """
+        This is a private message handler method.
+        It handles replies to eeprom_read requests. It stores the data
+        for each eeprom address in a dictionary called eeprom_map.
+        The data may be retrieved via a polling call to eeprom_get_read_data().
+        It a callback was specified in pymata.eeprom_read, the raw data is sent
+        through the callback
+
+        :param data: raw data returned from eeprom device
+
+        """
+        # initialize the reply data with I2C pin mode
+        reply_data = []
+        # reassemble the data from the firmata 2 byte format
+        # if we have an entry in the isotest_map, proceed
+        if 0 in self.isotest_map:
+            with self.the_isotest_map_lock:
+                # get 2 bytes, combine them and append to reply data list
+                for i in range(0, len(data), 2):
+                    combined_data = (data[i] & 0x7f) + (data[i + 1] << 7)
+                    reply_data.append(combined_data)
+
+                current_time = time.time()
+                reply_data.append(current_time)
+
+                # place the data in the i2c map without storing the address byte or
+                #  register byte (returned data only)
+                map_entry = self.isotest_map.get(0)
+                map_entry['value'] = reply_data[3:]
+                map_entry['time_stamp'] = current_time
+                self.isotest_map[0] = map_entry
+                cb = map_entry.get('callback')
+                if cb:
+                    # send everything, including address and register bytes back
+                    # to caller
+                    # reply data will contain:
+                    # [raw data returned from i2c device, time-stamp]
+                    cb(reply_data)
+
+    def _isotest_read_request(self, callback=None):
+        """
+        This method requests the read of an isotest buffer
+
+        If a callback method is provided, when data is received from the
+        device it will be sent to the callback method.
+
+        ISOTEST_READ = 0x01
+
+        :param callback: Optional callback function to report i2c data as a
+                result of read command
+
+        """
+        if 0 not in self.isotest_map:
+            with self.the_isotest_map_lock:
+                self.isotest_map[0] = {'value': None, 'callback': callback}
+    
+        data = [PrivateConstants.ISOREST_READ]
+        self._send_sysex(PrivateConstants.ISOTEST_REQUEST, data)

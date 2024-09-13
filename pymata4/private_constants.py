@@ -47,6 +47,8 @@ class PrivateConstants:
     SONAR_DATA = 0x63  # distance data returned
     EEPROM_REQUEST = 0x54
     EEPROM_REPLY = 0x55
+    ISOTEST_REQUEST = 0x56
+    ISOTEST_REPLY = 0x57
     # end of FirmataExpress defined SYSEX commands
 
     SERVO_CONFIG = 0x70  # set servo pin and max and min angles
@@ -139,3 +141,5 @@ class PrivateConstants:
     # EEPROM command operation modes
     EEPROM_WRITE = 0x00
     EEPROM_READ = 0x01
+    ISOTEST_START = 0x00
+    ISOREST_READ = 0x01
