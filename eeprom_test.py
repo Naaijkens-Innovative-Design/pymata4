@@ -25,13 +25,22 @@ and toggle the pin using the digital_pin_output as opposed to digital_output
 pin mode.
 """
 
-def the_callback(data):
+def eeprom_callback(data):
     """
     A callback function to report raw data changes.
 
     :param data: [pin, current reported value, pin_mode, timestamp]
     """
     print('read eeprom callback:')
+    print(data) 
+
+def isotest_callback(data):
+    """
+    A callback function to report raw data changes.
+
+    :param data: [pin, current reported value, pin_mode, timestamp]
+    """
+    print('read isotest callback:')
     print(data) 
 
 def blink(my_board, pin):
@@ -57,37 +66,36 @@ def blink(my_board, pin):
         print('OFF')
         my_board.digital_pin_write(pin, 0)
 
-board = pymata4.Pymata4(com_port='COM3',baud_rate=57600)
+board = pymata4.Pymata4(com_port='COM10',baud_rate=57600)
 
 # test eeprom
 print('write eeprom')
 board.eeprom_write(300, [56, 65, 78, 98])
-time.sleep(2);
+time.sleep(5);
 print('read eeprom')
-board.eeprom_read(300, 4, the_callback)
+board.eeprom_read(300, 4, eeprom_callback)
+time.sleep(5);
 
 # test isotest
 print('start isotest type 1')
 board.isotest_start(1)
-time.sleep(2);
+time.sleep(10);
 print('read isotest')
-board.isotest_read(the_callback)
+board.isotest_read(isotest_callback)
 
-print('start isotest type 2')
-board.isotest_start(2)
-time.sleep(2);
-print('read isotest')
-board.isotest_read(the_callback)
-
-try:
-    time.sleep(10)
-except KeyboardInterrupt:
-    board.shutdown()
-    sys.exit(0)
+# print('start isotest type 2')
+# board.isotest_start(2)
+# time.sleep(10);
+# print('read isotest')
+# board.isotest_read(isotest_callback)
 
 while True:
     try:
-        blink(board, 13)
+        print("led on")
+        board.digital_pin_write(13, 1)
+        time.sleep(1)
+        print("led off")
+        board.digital_pin_write(13, 0)
         time.sleep(1)
     except KeyboardInterrupt:
         board.shutdown()
