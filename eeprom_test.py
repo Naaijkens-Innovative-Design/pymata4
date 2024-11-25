@@ -66,22 +66,38 @@ def blink(my_board, pin):
         print('OFF')
         my_board.digital_pin_write(pin, 0)
 
-board = pymata4.Pymata4(com_port='COM10',baud_rate=57600)
+board = pymata4.Pymata4(com_port='COM2',baud_rate=57600,shutdown_on_exception=False)
 
 # test eeprom
-print('write eeprom')
-board.eeprom_write(300, [56, 65, 78, 98])
-time.sleep(5);
-print('read eeprom')
-board.eeprom_read(300, 4, eeprom_callback)
-time.sleep(5);
+# print('write eeprom')
+# board.eeprom_write(300, [56, 65, 78, 98])
+# time.sleep(5);
+# print('read eeprom')
+# board.eeprom_read(300, 4, eeprom_callback)
+# time.sleep(5);
 
 # test isotest
 print('start isotest type 1')
 board.isotest_start(1)
-time.sleep(10);
+time.sleep(2);
 print('read isotest')
 board.isotest_read(isotest_callback)
+time.sleep(5);
+
+# print('start isotest type 1')
+# board.isotest_start(1)
+# time.sleep(5);
+# print('read isotest')
+# board.isotest_read(isotest_callback)
+# time.sleep(5);
+
+# test isotest
+print('start isotest type 2')
+board.isotest_start(2)
+time.sleep(2);
+print('read isotest')
+board.isotest_read(isotest_callback)
+time.sleep(5);
 
 # print('start isotest type 2')
 # board.isotest_start(2)
@@ -89,14 +105,5 @@ board.isotest_read(isotest_callback)
 # print('read isotest')
 # board.isotest_read(isotest_callback)
 
-while True:
-    try:
-        print("led on")
-        board.digital_pin_write(13, 1)
-        time.sleep(1)
-        print("led off")
-        board.digital_pin_write(13, 0)
-        time.sleep(1)
-    except KeyboardInterrupt:
-        board.shutdown()
-        sys.exit(0)
+board.shutdown()
+sys.exit(0)

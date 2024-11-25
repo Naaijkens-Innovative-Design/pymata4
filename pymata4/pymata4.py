@@ -1972,7 +1972,11 @@ class Pymata4(threading.Thread):
                     dispatch_entry = self.report_dispatch.get(data)
 
                     # this calls the method retrieved from the dispatch table
-                    method = dispatch_entry[0]
+                    try:
+                        method = dispatch_entry[0]
+                    except:
+                        print("input error")
+                        continue
 
                     # get the number of parameters that this command provides
                     num_args = dispatch_entry[1]
