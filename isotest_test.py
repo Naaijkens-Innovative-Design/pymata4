@@ -68,13 +68,21 @@ def blink(my_board, pin):
 
 board = pymata4.Pymata4(com_port='COM2',baud_rate=57600,shutdown_on_exception=False)
 
-# test eeprom
-print('write eeprom')
-board.eeprom_write(300, [56, 65, 78, 98])
-time.sleep(5);
-print('read eeprom')
-board.eeprom_read(300, 4, eeprom_callback)
-time.sleep(5);
+# test isotest type 1
+print('start isotest type 1')
+board.isotest_start(1)
+time.sleep(3);
+print('read isotest')
+board.isotest_read(isotest_callback)
+time.sleep(3);
+
+# test isotest type 2
+print('start isotest type 2')
+board.isotest_start(2)
+time.sleep(3);
+print('read isotest')
+board.isotest_read(isotest_callback)
+time.sleep(3);
 
 board.shutdown()
 sys.exit(0)
